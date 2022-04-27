@@ -42,8 +42,10 @@ dependencies:
   connectivity_plus: ^2.2.1
   fluttertoast: ^8.0.9
   string_scanner: ^1.1.0
-
+  flutter_blue: ^0.8.0
   cupertino_icons: ^1.0.2
+  firebase_messaging: ^11.2.12
+  flutter_local_notifications: ^9.4.0
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +66,8 @@ flutter:
   assets:
     - Assets/images/main_screen2.png
     - Assets/images/welcome.png
+    - Assets/images/acImage.png
+    - Assets/images/waterTank.png
     - Assets/Icon/google-logo.png
 
 

@@ -40,7 +40,7 @@ class _ContactUsState extends State<ContactUs> {
 
   @override
   Widget build(BuildContext context) {
-    final contactUSReference = database.child('Queries/');
+    final contactUSReference = database.child('ContactFormData/');
     final User? user = fb.currentUser;
     return GestureDetector(
       onTap: () {
@@ -198,13 +198,12 @@ class _ContactUsState extends State<ContactUs> {
                                 getData();
                                 var data = {
                                   'Name': getName,
-                                  'User- ID': user!.uid,
                                   'Contact': getContact,
                                   'Query': getSubject,
                                   'Description': getDesc
                                 };
                                 try{
-                                  await contactUSReference.update(data);
+                                  await contactUSReference.push().update(data);
                                   Fluttertoast.showToast(msg:
                                   'We will connect you within 2 business days',
                                     gravity: ToastGravity.BOTTOM,

@@ -2,22 +2,177 @@
 
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_home/logic/NetworkCheck.dart';
+import 'package:smart_home/logic/SonarFeature.dart';
 import 'package:smart_home/screens/Contact_Us.dart';
+import 'logic/ACFeature.dart';
 import 'screens/DeviceScreen.dart';
 import 'package:smart_home/screens/main_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+
+const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  'high_importance_channel',
+  'High Importance Notifications',
+  importance: Importance.high,
+  playSound: true,
+);
+
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+Future<void> _backgroundNotifications(RemoteMessage message) async{
+  await Firebase.initializeApp();
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_backgroundNotifications);
+  await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()!.
+      createNotificationChannel(channel);
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  // var firebaseDb = FirebaseDatabase.instance.ref();
+  // void getValue(dynamic value){
+  //   if(value == 1){
+  //     showNotification('Someone out there');
+  //     Future.delayed(Duration(seconds: 5),);
+  //     firebaseDb.child('Users').child(FirebaseAuth.instance.currentUser!.uid).child('Sensors').
+  //     child('MotionDetector').update({'MotionDetection' : 0});
+  //   }
+  // }
+  // void getValue2(dynamic value){
+  //   if(value == 1){
+  //     showNotification('Smoke Detected in your house');
+  //     Future.delayed(Duration(seconds: 5),);
+  //     firebaseDb.child('Users').child(FirebaseAuth.instance.currentUser!.uid).child('Sensors').
+  //     child('SmokeDetector').update({'SmokeDetection' : 0});
+  //   }
+  // }
+  //
+  //
+  // void checkBurn(){
+  //   firebaseDb.child('Users').child(FirebaseAuth.instance.currentUser!.uid).child('Sensors').
+  //   child('MotionDetector').onValue.listen((event) {
+  //     try{
+  //       Map<String,dynamic>.from(event.snapshot.value as dynamic).forEach((key, value) {
+  //         getValue(value);
+  //       });}
+  //     catch(e){}
+  //
+  //   });
+  // }
+  // void checkSmoke(){
+  //   firebaseDb.child('Users').child(FirebaseAuth.instance.currentUser!.uid).child('Sensors').
+  //   child('SmokeDetector').onValue.listen((event) {
+  //     try{
+  //       Map<String,dynamic>.from(event.snapshot.value as dynamic).forEach((key, value) {
+  //         getValue2(value);
+  //       });}
+  //     catch(e){}
+  //
+  //   });
+  // }
+  
+  @override
+  void initState() {
+    super.initState();
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification? remoteNotification = message.notification;
+      AndroidNotification? android = message.notification!.android;
+      if(remoteNotification!= null && android!= null){
+        // showDialog(context: context, builder: (_){
+        //   return AlertDialog(
+        //     title: Text(remoteNotification.title.toString()),
+        //     content: SingleChildScrollView(
+        //       child: Column(
+        //         children: [
+        //           TextButton(onPressed: () {  }, child: Text('ALert!!!'
+        //               ''),),
+        //         ],
+        //       ),
+        //     ),
+        //   );
+        // });
+        flutterLocalNotificationsPlugin.show(
+          remoteNotification.hashCode,
+          remoteNotification.title,
+          remoteNotification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+             channel.id,
+             channel.name,
+              color: Colors.blue,
+              playSound: true,
+              icon: '@mipmap/ic_launcher',
+            )
+          )
+        );
+      }
+
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        print('notification');
+        RemoteNotification? remoteNotification = message.notification;
+        AndroidNotification? android = message.notification!.android;
+        if(remoteNotification!= null && android!= null){
+         // showDialog(context: context, builder:(_){
+         //   return AlertDialog(
+         //     title: Text(remoteNotification.title.toString()),
+         //     content: SingleChildScrollView(
+         //       child: Column(
+         //         children: [
+         //           TextButton(onPressed:(){
+         //
+         //           }, child:
+         //
+         //           Text(
+         //             'Alert!!!'
+         //           )),
+         //         ],
+         //       )
+         //     ),
+         //   );
+         // } );
+        }
+    });
+   // checkBurn();
+    //checkSmoke();
+  }
+  void showNotification(String string){
+    flutterLocalNotificationsPlugin.show(0, 'Alert!!!', string,
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        channel.id,
+        channel.name,
+        importance: Importance.high,
+        color: Colors.blue,
+        playSound: true,
+        icon: '@mipmap/ic_launcher',
+      ),
+    ));
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +185,9 @@ class MyApp extends StatelessWidget {
       routes: {
         '/DeviceScreen' : (BuildContext context) => DeviceScreen(),
         '/ContactUs' : (BuildContext context) => ContactUs(),
+        '/MainScreen' : (BuildContext context) => mainScreen(),
+        '/autoAc' : (BuildContext context) => AutoAC(),
+        '/sonar' : (BuildContext) => AutoSonar()
       },
       home: Scaffold(
 appBar: AppBar(
@@ -136,52 +294,3 @@ class _splashScreenState extends State<splashScreen> {
 
 
 
-// Future<void> main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-//   await Firebase.initializeApp();
-//   runApp(MaterialApp(
-//     home: mainApp(),));}
-//
-// class mainApp extends StatelessWidget {
-//   const mainApp({Key? key}) : super(key: key);
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       home: Scaffold(
-//         backgroundColor: Colors.white,
-//         body: Column(
-//           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Image.asset('Assets/images/main_screen2.png'),
-//             Text('Some Text',
-//             textAlign: TextAlign.left,
-//             style: TextStyle(
-//               color: Colors.blue,
-//               backgroundColor: Colors.white
-//             ),),
-//            Container(
-// alignment: Alignment.bottomRight,
-//              color: Colors.white,
-//              child: CustomButton(
-//                textColor: Color(0xFFFFFFFF),
-//                buttonColors: Color(0xFF40C4FF),
-//
-//                text: 'Get Started',
-//                leadingWidget: Icon(
-//                  Icons.arrow_forward_rounded,
-//                  color: Colors.white,
-//                ),
-//                onPressed: ()=>{
-//                  Navigator.push(context, MaterialPageRoute(builder: (context) => mainScreen()))
-//                },
-//                 borderRadius: 20.0,
-//              ),
-//            )
-//           ],
-//         ),
-//       ),);
-//   }
-// }
-//

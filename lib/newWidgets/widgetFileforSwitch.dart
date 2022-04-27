@@ -1,14 +1,17 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_home/newWidgets/switch.dart';
 import 'package:smart_home/screens/DeviceScreen.dart';
 
 class Custom_Switch extends StatefulWidget {
-
-  const Custom_Switch({required this.count, Key? key}) : super(key: key);
+  Custom_Switch({required this.count, required this.abc, required this.name,});
   final int count;
+  final dynamic abc;
+  final dynamic name;
 
   @override
   _Custom_SwitchState createState() => _Custom_SwitchState();
@@ -16,7 +19,48 @@ class Custom_Switch extends StatefulWidget {
 
 class _Custom_SwitchState extends State<Custom_Switch> {
   bool status1 = false;
+  static bool setData = false;
   String statusText = 'OFF';
+  final database = FirebaseDatabase.instance.ref();
+  FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  User? user = FirebaseAuth.instance.currentUser;
+
+  @override
+  void initState() {
+    tempFunction();
+    super.initState();
+  }
+
+  void dataWrite(int write, dynamic str){
+    database.child('Users').child(user!.uid).child('DeviceList').child(str).
+    update(
+      {'Device_Status': write}
+    );
+  }
+  getFunc(int datas){
+    if(datas == 0){
+      if(mounted){
+      setState(() {
+        setData = false;
+        statusText = 'OFF';
+        status1 = false;
+      });
+    }}
+    if(datas == 1){
+      if(mounted){
+      setState(() {
+        setData = true;
+        statusText = 'ON';
+        status1 = true;
+      });
+    }}
+  }
+  void tempFunction(){
+    database.child('Users').child(user!.uid).child('DeviceList').child(widget.abc).child('Device_Status').onValue.listen((event) {
+      getFunc(event.snapshot.value as int);
+    });
+  }
+  
   @override
   Widget build(BuildContext context) {
     int deviceId = widget.count + 1;
@@ -29,26 +73,12 @@ class _Custom_SwitchState extends State<Custom_Switch> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Device-$deviceId',
+            Text('Device: ' +widget.name.toString(),
               style: TextStyle(
                 fontSize: 20.0,
                 fontFamily: 'Open',
                 fontWeight: FontWeight.bold,
               ),),
-    //         ElevatedButton(onPressed: (){
-    //
-    //           setState(() {
-    //           });
-    //         },
-    // style: ElevatedButton.styleFrom(
-    //   elevation: 0,
-    // fixedSize: const Size(10, 10),
-    // shape: const CircleBorder(),primary: Colors.white,
-    // ),
-    //             child: Icon(
-    //               Icons.highlight_remove_outlined,
-    //               color: Colors.indigoAccent,
-    //             ),),
           ],
         ),
         SizedBox(height: 20.0),
@@ -62,9 +92,15 @@ class _Custom_SwitchState extends State<Custom_Switch> {
                   status1 = val;
                   if(status1 == true){
                     statusText = 'ON';
+                    setData = true;
+                    print(widget.abc);
+                    dataWrite(1, widget.abc);
                   }
                   else{
                     statusText = 'OFF';
+                    setData = false;
+                    print(widget.abc);
+                    dataWrite(0, widget.abc);
                   }
                 });
               },

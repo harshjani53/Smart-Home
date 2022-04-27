@@ -27,13 +27,13 @@ Future<void> accountSignIn(BuildContext context) async {
       final UserCredential result =
       await firebaseAuth.signInWithCredential(credential);
       final User? authUser = result.user;
-      DatabaseReference _databaseReference = firebaseDatabase.ref(authUser!.uid);
+      DatabaseReference _databaseReference = firebaseDatabase.ref();
 
       var data = {
         'provider': 'Google Account',
-        'email': googleSignInAccount.email
+        'identity': googleSignInAccount.email
       };
-      _databaseReference.update(data);
+      _databaseReference.child('Users').child(authUser!.uid).update(data);
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => DeviceScreen(),

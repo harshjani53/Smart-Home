@@ -39,19 +39,12 @@ class _NumberLoginState extends State<NumberLogin> {
       final authorize =
       await _firebaseAuth.signInWithCredential(phoneAuthCredential);
       final User? authorizeUser = authorize.user;
-      DatabaseReference databaseReference = firebaseDatabase.ref(authorizeUser!.uid);
+      DatabaseReference databaseReference = firebaseDatabase.ref();
       var data = {
         'identity': _phoneController.text,
         'provider': 'Phone Number'
       };
-      databaseReference.update(data);
-      // _collectionReference.doc(authorizeUser!.uid).get().then((doc) {
-      //   if (doc.exists) {
-      //     doc.reference.update(data);
-      //   } else {
-      //     _collectionReference.doc(authorizeUser.uid).set(data);
-      //   }
-      // });
+      databaseReference.child('Users').child(authorizeUser!.uid).update(data);
       setState(() {
         spin = false;
       });
